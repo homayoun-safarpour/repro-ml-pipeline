@@ -1,0 +1,11 @@
+{
+  "run_id": "93adf1850cba466bada5f23998c21043",
+  "metrics": {
+    "accuracy": 1.0,
+    "f1": 1.0
+  },
+  "signature": "3902861daa408ac48a163afd6835e2d7c7b8dad792bdd516027e6aada1857202",
+  "model_path": "examples/artifacts/model.joblib",
+  "signature_path": "examples/artifacts/run_signature.json",
+  "tracking_uri": "sqlite:///examples/artifacts/mlflow.db"
+}

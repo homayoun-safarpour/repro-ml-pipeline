@@ -1,0 +1,15 @@
+{
+  "signature": "3902861daa408ac48a163afd6835e2d7c7b8dad792bdd516027e6aada1857202",
+  "meta": {
+    "n_samples": 426,
+    "n_features": 30,
+    "x_sha256": "093a873cda198a629549facccf2b734680bbbcb7dedc109169cf317a6686ec01",
+    "y_sha256": "80883de46c7021a6483104a0ec6d525a2262977e2bd1ea24e15895c8d3dc900c",
+    "params": {
+      "C": 1.0,
+      "max_iter": 500,
+      "solver": "lbfgs"
+    },
+    "random_state": 42
+  }
+}
