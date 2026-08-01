@@ -1,84 +1,131 @@
 # repro-ml-pipeline
 
-**Notebooks train a model that nobody can re-run with the same bits. This pipeline logs sklearn fits to MLflow, pins a data+params signature hash, and fails CI when the signature drifts.**
+**A model score is not reproducible unless the data, environment, code, parameters, and seed identify the same run.**
 
 [![CI](https://github.com/homayoun-safarpour/repro-ml-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/homayoun-safarpour/repro-ml-pipeline/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-## The problem
+This repository is a local-first train, register, serve, and verify path for a sklearn
+classifier. Ordinary development and CI need no paid API, cloud account, or production
+credential.
 
-A "production ML pipeline" claim usually means a Docker image and a hope. Without a content hash over the training matrix and hyperparameters, a silent data pull or param tweak still produces a green accuracy number. Interviewers ask whether you can prove the run is the same run.
+## The failure it catches
 
-## Threat model (when this fails in production)
-
-| Failure | What it looks like | What this repo does |
+| Change | Evidence in the signature | Gate |
 | --- | --- | --- |
-| Silent data change | Accuracy similar; different rows | `SIGNATURE_MISMATCH` on `verify-signature` |
-| Param drift | Someone changes `C` in CI YAML only | Signature includes params JSON |
-| Metrics without lineage | MLflow metrics, no pin file | Signature artifact + tag `run_signature` |
-| Irreproducible seed | "Works on my laptop" | Fixed `random_state` in signature |
-| Image-only ship | Docker without a gate | CI runs train + verify on every push |
+| Dataset bytes or version | Manifest and content SHA-256 | exit `2` |
+| Resolved environment | `uv.lock` SHA-256 | exit `2` |
+| Training source | Stable source-tree revision | exit `2` |
+| Hyperparameters | Canonical parameter object | exit `2` |
+| Randomness | Explicit seed | exit `2` |
 
-## Install
+`tests/test_pipeline.py::test_full_signature_covers_data_environment_code_params_and_seed`
+names the central claim. `test_data_quality_rejects_content_drift` and
+`test_metric_regression_floor` cover the data and quality boundaries.
+
+## Install in under 30 minutes
+
+Install [uv](https://docs.astral.sh/uv/), then:
 
 ```bash
 git clone https://github.com/homayoun-safarpour/repro-ml-pipeline
 cd repro-ml-pipeline
-pip install -e ".[dev]"
+uv sync --frozen --extra dev
+uv run repro-ml train --artifact-dir examples/artifacts
+uv run repro-ml verify-signature --pin examples/artifacts/run_signature.json
 ```
 
-Python 3.10+. Requires scikit-learn and MLflow.
+The CSV and its manifest are committed under `data/`. Once dependencies are cached, the
+same workflow remains available offline through the local SQLite MLflow backend.
 
-## Quickstart
+## Real benchmark
+
+`uv run python scripts/run_benchmark.py` produced the committed
+[`examples/benchmark_reproducibility.md`](examples/benchmark_reproducibility.md):
+
+```text
+Repeated signatures and metrics equal: true
+Holdout accuracy: 0.986014
+Five-fold CV accuracy: 0.978878 +/- 0.008790
+Deliberate C=1.0 -> 0.5 drift: SIGNATURE_MISMATCH (exit 2)
+```
+
+The report includes both run records and full hashes. It proves repeatability for the
+committed Wisconsin Diagnostic data and locked pipeline, not generalization to another
+population.
+
+## Train, register, predict
+
+Training logs metrics and the signature to MLflow, creates an immutable registry version,
+and points the `champion` alias at that version:
 
 ```bash
-repro-ml train --artifact-dir examples/artifacts
-repro-ml verify-signature --pin examples/artifacts/run_signature.json
+uv run repro-ml train --artifact-dir examples/artifacts
+uv run repro-ml predict \
+  --tracking-uri sqlite:///examples/artifacts/mlflow.db \
+  --model-uri models:/repro-ml-classifier@champion
 ```
 
-Real output from this repository (committed under `examples/`):
+`tests/test_cli.py::test_cli_train_and_verify` proves both registry-backed prediction and
+signature exit semantics.
 
-```
-$ cat examples/train_summary.json
-(see file: run_id, accuracy, f1, signature)
+## Serve the registry model
 
-$ repro-ml verify-signature --pin examples/artifacts/run_signature.json
-verdict: PASS
+The API exposes liveness, registry-backed readiness, run metadata, and a typed 30-feature
+prediction request:
+
+```bash
+MLFLOW_TRACKING_URI=sqlite:///examples/artifacts/mlflow.db \
+MODEL_URI=models:/repro-ml-classifier@champion \
+uv run uvicorn repro_ml_pipeline.serve:app --port 8000
 ```
+
+- `GET /health` checks the process.
+- `GET /ready` loads the versioned model URI.
+- `GET /metadata` returns registry version, run ID, data hash, code revision, and signature.
+- `POST /predict` validates all 30 numeric features before inference.
+
+`tests/test_serve.py::test_api_health_readiness_metadata_and_registry_prediction` backs
+these claims.
+
+## Docker Compose
+
+```bash
+docker compose up --build --wait
+curl http://localhost:8000/metadata
+docker compose down -v
+```
+
+Compose starts the MLflow HTTP tracking server, runs a one-shot trainer that registers
+`champion`, then starts the API. The `docker-smoke` CI job builds the images and calls
+readiness, metadata, and prediction endpoints.
+
+## CI and release boundary
+
+- CI installs `uv.lock`, runs ruff and pytest on Python 3.10, 3.11, and 3.12, then performs
+  an explicit train and signature verification on each version.
+- A separate Docker job executes the tracking, registry, trainer, and API path.
+- Pushing a `v*` tag reruns quality gates, builds wheel/sdist files, publishes a versioned
+  image to GitHub Container Registry, and creates a GitHub Release.
+- No workflow deploys to an external runtime. Cloud hosting still requires an approved
+  account, credentials, persistence, networking, monitoring, and rollback policy.
 
 ## How we did it
 
-1. **Chose upstream patterns.** MLflow's sklearn examples ([mlflow/mlflow](https://github.com/mlflow/mlflow), Apache-2.0) show tracking + model logging. Full MLflow monorepo forks are not a 30-minute portfolio instrument.
-2. **Restyled into one instrument.** MIT package `repro-ml-pipeline`: breast-cancer demo, LogisticRegression pipeline, local file store, Docker, GitHub Actions.
-3. **Sharp improvement.** Data+params `run_signature` SHA-256 verified in CI (`verify-signature` exit `0`/`2`). Named tests: `test_signature_changes_when_params_change`, `test_cli_train_and_verify`.
-4. **Reproduce committed artifacts:**
+1. Kept MLflow's documented sklearn logging and registry interfaces.
+2. Replaced an implicit sklearn data loader with a versioned CSV, source record, and hash.
+3. Expanded the gate from data and parameters to the complete run identity.
+4. Split process health from model readiness and made inference resolve a registry URI.
+5. Kept local SQLite and committed data so the core path does not depend on hosted systems.
 
-```bash
-repro-ml train --artifact-dir examples/artifacts
-cp examples/artifacts/train_summary.json examples/train_summary.json
-```
+See [`docs/INTERVIEW.md`](docs/INTERVIEW.md) for the two-minute walkthrough and trade-offs.
 
-## Compose with the rest of the stack
+## Contributing
 
-| Repo | Role next to this |
-| --- | --- |
-| [judge-reliability-kit](https://github.com/homayoun-safarpour/judge-reliability-kit) | Evaluation math when humans/LLMs label model outputs |
-| [judge-drift-sentinel](https://github.com/homayoun-safarpour/judge-drift-sentinel) | Drift gate for judges; this repo is the training signature gate |
-| [rag-eval-service](https://github.com/homayoun-safarpour/rag-eval-service) | Retrieval eval service when the product is RAG, not tabular ML |
-| [agent-loop-engine](https://github.com/homayoun-safarpour/agent-loop-engine) | Can treat `verify-signature` exit `2` like any other quality gate |
-
-## Docker
-
-```bash
-docker build -t repro-ml-pipeline .
-docker run --rm repro-ml-pipeline train --artifact-dir /tmp/out \
-  --tracking-uri sqlite:////tmp/out/mlflow.db
-```
-
-## Topics
-
-`mlops` · `mlflow` · `scikit-learn` · `reproducibility` · `docker` · `ci-cd` · `python`
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md). Changes to data, signatures, training, or
+dependencies must rerun the benchmark. Small extension ideas are listed there and in the
+issue template.
 
 ## License
 

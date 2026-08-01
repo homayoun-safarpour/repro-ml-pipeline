@@ -1,0 +1,70 @@
+services:
+  tracking:
+    build: .
+    command:
+      - mlflow
+      - server
+      - --backend-store-uri
+      - sqlite:////mlflow/mlflow.db
+      - --artifacts-destination
+      - /mlflow/artifacts
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  trainer:
+    build: .
+    command:
+      - repro-ml
+      - train
+      - --tracking-uri
+      - http://tracking:5000
+      - --artifact-dir
+      - /shared
+      - --model-name
+      - repro-ml-classifier
+      - --alias
+      - champion
+    depends_on:
+      tracking:
+        condition: service_healthy
+    volumes:
+      - run-artifacts:/shared
+
+  api:
+    build: .
+    environment:
+      MLFLOW_TRACKING_URI: http://tracking:5000
+      MODEL_URI: models:/repro-ml-classifier@champion
+    ports:
+      - "8000:8000"
+    depends_on:
+      trainer:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/ready')"
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  mlflow-data:
+  run-artifacts:

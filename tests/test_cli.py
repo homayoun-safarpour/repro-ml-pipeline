@@ -47,6 +47,28 @@ def test_cli_train_and_verify(tmp_path: Path):
     assert verify.returncode == 0, verify.stdout + verify.stderr
     assert "PASS" in verify.stdout
 
+    summary = json.loads((artifacts / "train_summary.json").read_text(encoding="utf-8"))
+    predict = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "repro_ml_pipeline.cli",
+            "predict",
+            "--tracking-uri",
+            summary["tracking_uri"],
+            "--model-uri",
+            summary["model_uri"],
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert predict.returncode == 0, predict.stdout + predict.stderr
+    result = json.loads(predict.stdout)
+    assert result["prediction"] in {0, 1}
+    assert result["model_uri"] == summary["model_uri"]
+
     # Tamper pin
     data = json.loads(pin.read_text(encoding="utf-8"))
     data["signature"] = "0" * 64

@@ -13,11 +13,42 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
+          version: "0.11.16"
           python-version: ${{ matrix.python-version }}
-      - run: pip install -e ".[dev]"
-      - run: ruff check src tests
-      - run: pytest -q
-      - name: Verify pinned signature
-        run: repro-ml verify-signature --pin examples/artifacts/run_signature.json
+      - name: Install locked environment
+        run: uv sync --frozen --extra dev
+      - name: Lint
+        run: uv run ruff check src tests scripts
+      - name: Test
+        run: uv run pytest -q
+      - name: Explicit train
+        run: uv run repro-ml train --artifact-dir "examples/ci-${{ matrix.python-version }}"
+      - name: Verify full run signature
+        run: uv run repro-ml verify-signature --pin "examples/ci-${{ matrix.python-version }}/run_signature.json"
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start tracking, registry, trainer, API
+        run: docker compose up --build --wait
+      - name: Verify registry-backed serving
+        run: |
+          curl --fail http://localhost:8000/ready
+          curl --fail http://localhost:8000/metadata
+          curl --fail -H "Content-Type: application/json" \
+            -d "{\"features\": [17.99,10.38,122.8,1001,0.1184,0.2776,0.3001,0.1471,0.2419,0.07871,1.095,0.9053,8.589,153.4,0.006399,0.04904,0.05373,0.01587,0.03003,0.006193,25.38,17.33,184.6,2019,0.1622,0.6656,0.7119,0.2654,0.4601,0.1189]}" \
+            http://localhost:8000/predict
+      - name: Capture container evidence
+        if: always()
+        run: docker compose logs --no-color > docker-compose.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docker-compose-smoke
+          path: docker-compose.log
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v

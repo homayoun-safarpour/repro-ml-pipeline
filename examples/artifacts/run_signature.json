@@ -1,15 +1,26 @@
 {
-  "signature": "3902861daa408ac48a163afd6835e2d7c7b8dad792bdd516027e6aada1857202",
+  "signature": "bc9e9ed0dfe7a7e3ac4b2c95b759afedf1d0d623bd3718e0e5e0249eee89de36",
   "meta": {
-    "n_samples": 426,
-    "n_features": 30,
-    "x_sha256": "093a873cda198a629549facccf2b734680bbbcb7dedc109169cf317a6686ec01",
-    "y_sha256": "80883de46c7021a6483104a0ec6d525a2262977e2bd1ea24e15895c8d3dc900c",
+    "schema_version": 2,
+    "data": {
+      "version": "1",
+      "content_sha256": "cd1c796fd1753b7ca60a00b1bd4a5adc090c87f69be2ca2e742cedf77bb260a2",
+      "n_samples": 569,
+      "n_features": 30
+    },
+    "environment": {
+      "lockfile": "uv.lock",
+      "lock_sha256": "2354c7dbc6fe1977e2c591b2a9c696ceadb315c88c8f8608be2b8327e6ff98f7",
+      "python_requires": ">=3.10,<3.13"
+    },
+    "code": {
+      "revision": "sha256:01f4bbab3e1dcee49443bf5c00f2e4a1ad44b578dfd0daeb09885090b8b947ec"
+    },
     "params": {
       "C": 1.0,
       "max_iter": 500,
       "solver": "lbfgs"
     },
-    "random_state": 42
+    "seed": 42
   }
 }

@@ -1,0 +1,11 @@
+{
+  "dataset_id": "sklearn-breast-cancer-wisconsin-diagnostic",
+  "version": "1",
+  "source": "https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic",
+  "license": "CC BY 4.0",
+  "file": "breast_cancer_v1.csv",
+  "sha256": "cd1c796fd1753b7ca60a00b1bd4a5adc090c87f69be2ca2e742cedf77bb260a2",
+  "rows": 569,
+  "features": 30,
+  "target": "target"
+}

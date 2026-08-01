@@ -1,11 +1,21 @@
 {
-  "run_id": "93adf1850cba466bada5f23998c21043",
+  "run_id": "e8409b1fa8354b85a1bb0f44d9620939",
   "metrics": {
-    "accuracy": 1.0,
-    "f1": 1.0
+    "accuracy": 0.986013986013986,
+    "f1": 0.9888888888888889,
+    "cv_accuracy_mean": 0.9788782489740082,
+    "cv_accuracy_std": 0.008789944460500165,
+    "cv_f1_mean": 0.9833141382674093,
+    "cv_f1_std": 0.006959981793399548
   },
-  "signature": "3902861daa408ac48a163afd6835e2d7c7b8dad792bdd516027e6aada1857202",
+  "signature": "bc9e9ed0dfe7a7e3ac4b2c95b759afedf1d0d623bd3718e0e5e0249eee89de36",
   "model_path": "examples/artifacts/model.joblib",
   "signature_path": "examples/artifacts/run_signature.json",
-  "tracking_uri": "sqlite:///examples/artifacts/mlflow.db"
+  "tracking_uri": "sqlite:///examples/artifacts/mlflow.db",
+  "model_uri": "models:/repro-ml-classifier@champion",
+  "model_name": "repro-ml-classifier",
+  "model_version": "4",
+  "model_alias": "champion",
+  "dataset_sha256": "cd1c796fd1753b7ca60a00b1bd4a5adc090c87f69be2ca2e742cedf77bb260a2",
+  "code_revision": "sha256:01f4bbab3e1dcee49443bf5c00f2e4a1ad44b578dfd0daeb09885090b8b947ec"
 }

@@ -1,0 +1,47 @@
+{
+  "benchmark": "reproducibility-v1",
+  "dataset_sha256": "cd1c796fd1753b7ca60a00b1bd4a5adc090c87f69be2ca2e742cedf77bb260a2",
+  "seed": 42,
+  "repeated_runs_equivalent": true,
+  "runs": [
+    {
+      "run": 1,
+      "signature": "bc9e9ed0dfe7a7e3ac4b2c95b759afedf1d0d623bd3718e0e5e0249eee89de36",
+      "metrics": {
+        "accuracy": 0.986013986013986,
+        "f1": 0.9888888888888889,
+        "cv_accuracy_mean": 0.9788782489740082,
+        "cv_accuracy_std": 0.008789944460500165,
+        "cv_f1_mean": 0.9833141382674093,
+        "cv_f1_std": 0.006959981793399548
+      },
+      "elapsed_seconds": 11.286
+    },
+    {
+      "run": 2,
+      "signature": "bc9e9ed0dfe7a7e3ac4b2c95b759afedf1d0d623bd3718e0e5e0249eee89de36",
+      "metrics": {
+        "accuracy": 0.986013986013986,
+        "f1": 0.9888888888888889,
+        "cv_accuracy_mean": 0.9788782489740082,
+        "cv_accuracy_std": 0.008789944460500165,
+        "cv_f1_mean": 0.9833141382674093,
+        "cv_f1_std": 0.006959981793399548
+      },
+      "elapsed_seconds": 2.01
+    }
+  ],
+  "deliberate_param_drift": {
+    "changed": {
+      "C": [
+        1.0,
+        0.5
+      ]
+    },
+    "baseline_signature": "bc9e9ed0dfe7a7e3ac4b2c95b759afedf1d0d623bd3718e0e5e0249eee89de36",
+    "drifted_signature": "65595b8b64022957f14d6144ece98999511cb0e3d489d0c604f197ee3dc3100d",
+    "verdict": "SIGNATURE_MISMATCH",
+    "exit_code": 2
+  },
+  "container_smoke": "Run `docker compose up --build --wait`; CI captures logs as an artifact."
+}
