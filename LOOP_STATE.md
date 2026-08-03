@@ -11,8 +11,8 @@
 - [x] Docker Compose tracking, train/register, and serve path
 - [x] Tag-gated GitHub release and GHCR artifact workflow
 - [x] Repeated-run and deliberate-drift benchmark committed under `examples/`
-- [ ] GitHub Actions green on the pushed commit
-- [ ] Public repository and sole-contributor checks confirmed after push
+- [x] GitHub Actions green on Python 3.10, 3.11, 3.12, and Docker smoke
+- [x] Public repository and sole-contributor checks confirmed after push
 
 No field benchmark is claimed. The committed benchmark tests this repository's
 reproducibility contract against the versioned Wisconsin Diagnostic dataset.
@@ -47,4 +47,5 @@ cloud service is configured or claimed.
 
 ## NEXT TICK
 
-Confirm the pushed CI run is green and record its URL.
+Tag `v0.2.0` only when a GitHub Release and GHCR publication are wanted. No external
+runtime deployment is configured.

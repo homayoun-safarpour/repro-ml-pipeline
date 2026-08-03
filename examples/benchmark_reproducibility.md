@@ -14,7 +14,15 @@ Command: `uv run python scripts/run_benchmark.py`
 ## Container smoke
 
 ```
-Run `docker compose up --build --wait`; CI captures logs as an artifact.
+GitHub Actions run: https://github.com/homayoun-safarpour/repro-ml-pipeline/actions/runs/30936022580
+docker-smoke: PASS (1m10s)
+tracking GET /health: 200
+trainer registered repro-ml-classifier version 1 and alias champion
+api GET /ready: 200
+api GET /metadata: 200
+api POST /predict: 200
+model_uri=models:/repro-ml-classifier@champion
+run_signature=bc9e9ed0dfe7a7e3ac4b2c95b759afedf1d0d623bd3718e0e5e0249eee89de36
 ```
 
 ## Scope
