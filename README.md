@@ -1,6 +1,6 @@
 # repro-ml-pipeline
 
-**A model score is not reproducible unless the data, environment, code, parameters, and seed identify the same run.**
+**Pin a run signature after training and fail CI when data, environment, code, parameters, or seed no longer match that contract.**
 
 [![CI](https://github.com/homayoun-safarpour/repro-ml-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/homayoun-safarpour/repro-ml-pipeline/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
