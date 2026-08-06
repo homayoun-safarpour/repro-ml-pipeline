@@ -1,12 +1,12 @@
-# Interview talking points — repro-ml-pipeline
+# Interview talking points : repro-ml-pipeline
 
 Five CLI-backed points for a technical screen (no resume recap).
 
-- **`repro-ml train --tracking-uri sqlite:///examples/artifacts/mlflow.db`** — trains the demo classifier, logs metrics to MLflow, registers `models:/repro-ml-classifier@champion`, and writes a pin-able run signature JSON.
-- **`repro-ml verify-signature --pin examples/artifacts/run_signature.json`** — recomputes the digest from committed data, manifest, params, and seed; exit `0` on PASS, exit `2` on mismatch.
-- **`repro-ml predict --model-uri models:/repro-ml-classifier@champion`** — scores through the registry alias so serving proves the resolved version, not a stale local pickle path.
-- **`docker compose up --build --wait` and `GET /metadata`** — the API exposes run ID, model version, and signature fields aligned with the CLI pin file.
-- **`pytest -q -k signature`** — includes `test_signature_changes_when_params_change`, which proves a hyperparameter edit fails the gate without silent metric drift.
+- **`repro-ml train --tracking-uri sqlite:///examples/artifacts/mlflow.db`** : trains the demo classifier, logs metrics to MLflow, registers `models:/repro-ml-classifier@champion`, and writes a pin-able run signature JSON.
+- **`repro-ml verify-signature --pin examples/artifacts/run_signature.json`** : recomputes the digest from committed data, manifest, params, and seed; exit `0` on PASS, exit `2` on mismatch.
+- **`repro-ml predict --model-uri models:/repro-ml-classifier@champion`** : scores through the registry alias so serving proves the resolved version, not a stale local pickle path.
+- **`docker compose up --build --wait` and `GET /metadata`** : the API exposes run ID, model version, and signature fields aligned with the CLI pin file.
+- **`pytest -q -k signature`** : includes `test_signature_changes_when_params_change`, which proves a hyperparameter edit fails the gate without silent metric drift.
 
 ## Three questions
 
