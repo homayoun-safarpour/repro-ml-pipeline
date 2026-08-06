@@ -36,6 +36,13 @@ uv run repro-ml train --artifact-dir examples/artifacts
 uv run repro-ml verify-signature --pin examples/artifacts/run_signature.json
 ```
 
+Fail-closed pin (wrong digest vs recomputed contract):
+
+```bash
+uv run repro-ml verify-signature --pin examples/artifacts/run_signature_fail_demo.json
+# SIGNATURE_MISMATCH → exit 2 (see examples/artifacts/run_signature_fail_demo_OUTPUT.txt)
+```
+
 The CSV and its manifest are committed under `data/`. Once dependencies are cached, the
 same workflow remains available offline through the local SQLite MLflow backend.
 
