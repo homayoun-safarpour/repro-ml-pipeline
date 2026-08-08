@@ -1,4 +1,4 @@
-# repro-ml-pipeline
+﻿# repro-ml-pipeline
 
 **Pin a run signature after training and fail CI when data, environment, code, parameters, or seed no longer match that contract.**
 
@@ -132,6 +132,12 @@ issue template.
 ## Field alignment
 
 Deterministic run-identity gates for classical ML paths. Claim boundaries: [docs/RELIABILITY_CARD.md](docs/RELIABILITY_CARD.md).
+
+## Related instruments
+
+- [judge-reliability-kit](https://github.com/homayoun-safarpour/judge-reliability-kit)
+- [agent-loop-engine](https://github.com/homayoun-safarpour/agent-loop-engine)
+- [judge-field-guide](https://github.com/homayoun-safarpour/judge-field-guide)
 
 ## License
 
