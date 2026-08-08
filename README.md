@@ -26,6 +26,8 @@ names the central claim. `test_data_quality_rejects_content_drift` and
 
 ## Install in under 30 minutes
 
+Claim boundaries: [docs/RELIABILITY_CARD.md](docs/RELIABILITY_CARD.md).
+
 Install [uv](https://docs.astral.sh/uv/), then:
 
 ```bash
