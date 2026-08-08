@@ -36,13 +36,6 @@ uv run repro-ml train --artifact-dir examples/artifacts
 uv run repro-ml verify-signature --pin examples/artifacts/run_signature.json
 ```
 
-Fail-closed pin (wrong digest vs recomputed contract):
-
-```bash
-uv run repro-ml verify-signature --pin examples/artifacts/run_signature_fail_demo.json
-# SIGNATURE_MISMATCH → exit 2 (see examples/artifacts/run_signature_fail_demo_OUTPUT.txt)
-```
-
 The CSV and its manifest are committed under `data/`. Once dependencies are cached, the
 same workflow remains available offline through the local SQLite MLflow backend.
 
@@ -133,6 +126,10 @@ See [`docs/INTERVIEW.md`](docs/INTERVIEW.md) for the two-minute walkthrough and 
 Read [`CONTRIBUTING.md`](CONTRIBUTING.md). Changes to data, signatures, training, or
 dependencies must rerun the benchmark. Small extension ideas are listed there and in the
 issue template.
+
+## Field alignment
+
+Deterministic run-identity gates for classical ML paths. Claim boundaries: [docs/RELIABILITY_CARD.md](docs/RELIABILITY_CARD.md).
 
 ## License
 
