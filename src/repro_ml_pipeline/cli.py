@@ -64,7 +64,7 @@ def main(argv: list[str] | None = None) -> int:
             f"run_id={summary['run_id']} "
             f"accuracy={summary['metrics']['accuracy']:.4f} "
             f"f1={summary['metrics']['f1']:.4f} "
-            f"signature={summary['signature'][:16]}…"
+            f"signature={summary['signature'][:16]}..."
         )
         return 0
 
@@ -83,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
         status, code = check_signature(pin["signature"], actual)
         print(f"verdict: {status}")
         if code != 0:
-            print(f"  expected={pin['signature'][:16]}… actual={actual[:16]}…")
+            print(f"  expected={pin['signature'][:16]}... actual={actual[:16]}...")
         return code
 
     if args.tracking_uri:

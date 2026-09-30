@@ -1,4 +1,4 @@
-﻿# repro-ml-pipeline
+# repro-ml
 
 **Pin a run signature after training and fail CI when data, environment, code, parameters, or seed no longer match that contract.**
 
@@ -6,9 +6,30 @@
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-This repository is a local-first train, register, serve, and verify path for a sklearn
-classifier. Ordinary development and CI need no paid API, cloud account, or production
-credential.
+Local-first sklearn to MLflow to FastAPI with a full-run signature verified in CI.
+
+```bash
+git clone https://github.com/homayoun-safarpour/repro-ml-pipeline
+cd repro-ml-pipeline
+uv sync --frozen
+uv run repro-ml verify-signature --pin examples/bad_pin.json
+```
+
+```text
+verdict: SIGNATURE_MISMATCH
+  expected=0000000000000000... actual=05091462d75dbc95...
+```
+
+That command exits 2. `examples/artifacts/run_signature.json` is the matching pin from a recorded train. `pip install -e .` is the wrong install here: it would ignore `uv.lock`, which is hashed into the signature.
+
+## Use this when
+
+| Situation | Use this? |
+| --- | --- |
+| You need CI to fail when data, env, code, params, or seed drifted | Yes |
+| You want a local sklearn to MLflow to FastAPI path with no paid API | Yes |
+| You want a general MLOps platform | No; this is one locked demo classifier |
+| You want GPU training | No |
 
 ## The failure it catches
 
@@ -24,16 +45,15 @@ credential.
 names the central claim. `test_data_quality_rejects_content_drift` and
 `test_metric_regression_floor` cover the data and quality boundaries.
 
-## Install in under 30 minutes
+## Quickstart
+
+Interview pack: [docs/INTERVIEW.md](docs/INTERVIEW.md).
 
 Claim boundaries: [docs/RELIABILITY_CARD.md](docs/RELIABILITY_CARD.md).
 
 Install [uv](https://docs.astral.sh/uv/), then:
 
 ```bash
-git clone https://github.com/homayoun-safarpour/repro-ml-pipeline
-cd repro-ml-pipeline
-uv sync --frozen --extra dev
 uv run repro-ml train --artifact-dir examples/artifacts
 uv run repro-ml verify-signature --pin examples/artifacts/run_signature.json
 ```
@@ -121,8 +141,6 @@ readiness, metadata, and prediction endpoints.
 4. Split process health from model readiness and made inference resolve a registry URI.
 5. Kept local SQLite and committed data so the core path does not depend on hosted systems.
 
-See [`docs/INTERVIEW.md`](docs/INTERVIEW.md) for the two-minute walkthrough and trade-offs.
-
 ## Contributing
 
 Read [`CONTRIBUTING.md`](CONTRIBUTING.md). Changes to data, signatures, training, or
@@ -131,7 +149,7 @@ issue template.
 
 ## Field alignment
 
-Deterministic run-identity gates for classical ML paths. Claim boundaries: [docs/RELIABILITY_CARD.md](docs/RELIABILITY_CARD.md).
+Deterministic run-identity gates for classical ML paths.
 
 ## Related instruments
 
