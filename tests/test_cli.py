@@ -90,3 +90,29 @@ def test_cli_train_and_verify(tmp_path: Path):
     )
     assert fail.returncode == 2
     assert "SIGNATURE_MISMATCH" in fail.stdout
+
+
+def test_verify_signature_json_verdict():
+    """The named test from #3: bad_pin.json with --json exits 2 as one JSON object."""
+    pin = ROOT / "examples" / "bad_pin.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "repro_ml_pipeline.cli",
+            "verify-signature",
+            "--pin",
+            str(pin),
+            "--json",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["verdict"] == "SIGNATURE_MISMATCH"
+    assert payload["exit_code"] == 2
+    assert len(payload["expected_prefix"]) == 16
+    assert len(payload["actual_prefix"]) == 16
