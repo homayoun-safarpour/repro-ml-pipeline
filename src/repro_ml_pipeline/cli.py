@@ -38,6 +38,11 @@ def main(argv: list[str] | None = None) -> int:
     vf.add_argument("--random-state", type=int, default=42)
     vf.add_argument("--data", default=str(DEFAULT_DATA_PATH))
     vf.add_argument("--manifest", default=str(DEFAULT_MANIFEST_PATH))
+    vf.add_argument(
+        "--json",
+        action="store_true",
+        help="print a machine-readable JSON object instead of text lines",
+    )
 
     pr = sub.add_parser("predict", help="score a row through a versioned MLflow model URI")
     pr.add_argument(
@@ -81,9 +86,18 @@ def main(argv: list[str] | None = None) -> int:
             dataset_version=str(dataset.manifest["version"]),
         )
         status, code = check_signature(pin["signature"], actual)
-        print(f"verdict: {status}")
-        if code != 0:
-            print(f"  expected={pin['signature'][:16]}... actual={actual[:16]}...")
+        if args.json:
+            payload = {
+                "verdict": status,
+                "expected_prefix": pin["signature"][:16],
+                "actual_prefix": actual[:16],
+                "exit_code": code,
+            }
+            print(json.dumps(payload))
+        else:
+            print(f"verdict: {status}")
+            if code != 0:
+                print(f"  expected={pin['signature'][:16]}... actual={actual[:16]}...")
         return code
 
     if args.tracking_uri:
