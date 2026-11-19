@@ -1,4 +1,4 @@
-# repro-ml-pipeline — project backlog
+# repro-ml-pipeline: project backlog
 
 ## BENCHMARK GATE
 
