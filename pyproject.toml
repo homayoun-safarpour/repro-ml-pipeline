@@ -9,7 +9,7 @@ description = "Train, register, serve, and verify sklearn models with full run s
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 license = "MIT"
-authors = [{ name = "Homayoun Safarpour", email = "homayoun.safarpour@gmail.com" }]
+authors = [{ name = "Homayoun Safarpour", email = "129149267+homayoun-safarpour@users.noreply.github.com" }]
 keywords = [
     "mlops",
     "mlflow",

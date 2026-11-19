@@ -1,4 +1,4 @@
-# Reliability card — repro-ml-pipeline
+# Reliability card: repro-ml-pipeline
 
 | Field | Value |
 | --- | --- |
