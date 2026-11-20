@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-Local-first sklearn to MLflow to FastAPI with a full-run signature verified in CI.
+ML reproducibility: local-first sklearn to MLflow to FastAPI with a full-run signature verified in CI.
 
 repro-ml is a small scikit-learn, MLflow and FastAPI path for one classifier that pins a run signature after training and checks it in CI. We built it because an MLflow run ID names a logged experiment but does not show that the next CI job trained on the same inputs. Given a pinned signature file, `repro-ml verify-signature` recomputes one SHA-256 digest from the dataset hash, the `uv.lock` hash, the package source, the parameters and the seed, and compares it with the pin. It returns `PASS` with exit 0 or `SIGNATURE_MISMATCH` with exit 2, so that a CI job can stop when any of these inputs has changed.
 
@@ -22,6 +22,10 @@ verdict: SIGNATURE_MISMATCH
 ```
 
 That command exits 2, because `examples/bad_pin.json` holds a zeroed signature. A pin written by your own `repro-ml train` run exits 0 (see [How it works](#how-it-works)).
+
+![repro-ml-pipeline: pinned run signature is checked by sha256 of data, uv.lock,; the result is SIGNATURE_MISMATCH with exit 2](docs/readme-flow.svg)
+
+[How it works](#how-it-works) · [Results](#what-each-result-means) · [Limits](#limits) · [Cite](#citation) · Part of [a small open stack for checking AI agents and their judges](https://homayoun-safarpour.github.io)
 
 ## What each result means
 
