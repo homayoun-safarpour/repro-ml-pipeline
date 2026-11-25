@@ -19,14 +19,19 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install locked environment
         run: uv sync --frozen --extra dev
+      # The committed pin is the approved run. Any change to the data, uv.lock, the
+      # package source, the parameters or the seed fails here until a reviewed commit
+      # re-pins examples/artifacts/run_signature.json.
+      - name: Verify the committed run signature
+        run: uv run repro-ml verify-signature --pin examples/artifacts/run_signature.json
       - name: Lint
         run: uv run ruff check src tests scripts
       - name: Test
         run: uv run pytest -q
       - name: Explicit train
         run: uv run repro-ml train --artifact-dir "examples/ci-${{ matrix.python-version }}"
-      - name: Verify full run signature
-        run: uv run repro-ml verify-signature --pin "examples/ci-${{ matrix.python-version }}/run_signature.json"
+      - name: Fresh training run reproduces the committed pin
+        run: diff examples/artifacts/run_signature.json "examples/ci-${{ matrix.python-version }}/run_signature.json"
 
   docker-smoke:
     runs-on: ubuntu-latest

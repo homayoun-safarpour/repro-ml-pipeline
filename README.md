@@ -8,7 +8,7 @@
 
 ML reproducibility: local-first sklearn to MLflow to FastAPI with a full-run signature verified in CI.
 
-repro-ml is a small scikit-learn, MLflow and FastAPI path for one classifier that pins a run signature after training and checks it in CI. We built it because an MLflow run ID names a logged experiment but does not show that the next CI job trained on the same inputs. Given a pinned signature file, `repro-ml verify-signature` recomputes one SHA-256 digest from the dataset hash, the `uv.lock` hash, the package source, the parameters and the seed, and compares it with the pin. It returns `PASS` with exit 0 or `SIGNATURE_MISMATCH` with exit 2, so that a CI job can stop when any of these inputs has changed.
+repro-ml is a small scikit-learn, MLflow and FastAPI path for one classifier that pins a run signature after training and checks it in CI. We built it because an MLflow run ID names a logged experiment but does not show that the next CI job trained on the same inputs. Given a pinned signature file, `repro-ml verify-signature` recomputes one SHA-256 digest from the dataset hash, the `uv.lock` hash, the package source, the parameters and the seed, and compares it with the pin. It returns `PASS` with exit 0 or `SIGNATURE_MISMATCH` with exit 2, so that a CI job can stop when any of these inputs has changed. This repository's own CI checks the committed pin `examples/artifacts/run_signature.json`.
 
 ```bash
 git clone https://github.com/homayoun-safarpour/repro-ml-pipeline
@@ -18,7 +18,7 @@ uv run repro-ml verify-signature --pin examples/bad_pin.json
 
 ```text
 verdict: SIGNATURE_MISMATCH
-  expected=0000000000000000... actual=05091462d75dbc95...
+  expected=0000000000000000... actual=e5dd67abf427480e...
 ```
 
 That command exits 2, because `examples/bad_pin.json` holds a zeroed signature. A pin written by your own `repro-ml train` run exits 0 (see [How it works](#how-it-works)).
@@ -31,10 +31,11 @@ That command exits 2, because `examples/bad_pin.json` holds a zeroed signature. 
 
 | Verdict | Exit | Meaning |
 |---|---|---|
-| `PASS` | 0 | The digest recomputed from the current data, lock file, package source, the pin's parameters and the seed equals the pinned signature. |
-| `SIGNATURE_MISMATCH` | 2 | At least one of those inputs differs from the pinned run. The output shows the first 16 characters of both digests. |
-| No verdict, a Python error | 1 | The pin file is missing, or the data file no longer matches the hash or shape in its manifest, so the check stops before it computes a signature. |
-| Usage message | 2 | A required argument such as `--pin` is missing (the exit code of Python's argument parser). |
+| `PASS` | 0 | The digest recomputed from the current data, lock file, package source, the pin's parameters and the pin's seed equals the pinned signature, and every field in the pin's `meta` equals the recomputed one. |
+| `SIGNATURE_MISMATCH` | 2 | At least one of those inputs differs from the pinned run. The output shows the first 16 characters of both digests and a `changed:` line naming the fields that differ. If the data file no longer matches the hash or shape in its manifest, it shows a `data:` line instead. |
+| `BAD_PIN` | 1 | The pin file is missing, is not JSON, or lacks a 64-character hex `signature` or a `meta` with `params` and an integer `seed`. No signature is computed. |
+| `BAD_INPUT` | 1 | The data or manifest file is missing, unreadable or malformed. No signature is computed. |
+| Usage message | 1 | A required argument such as `--pin` is missing. Exit 2 always means `SIGNATURE_MISMATCH`. |
 
 A `PASS` shows that the recorded inputs of a run are the same as those of the pinned run. It does not show that the installed packages match `uv.lock`, that the model is accurate on other data, or that the served model is the pinned one.
 
@@ -70,12 +71,12 @@ uv run repro-ml predict \
 Output of the three commands (the run ID differs on each run, and MLflow writes its own log lines to stderr):
 
 ```text
-run_id=fa64df3fc6f340f68912f13b11c402c8 accuracy=0.9860 f1=0.9889 signature=05091462d75dbc95...
+run_id=fa64df3fc6f340f68912f13b11c402c8 accuracy=0.9860 f1=0.9889 signature=e5dd67abf427480e...
 verdict: PASS
 {"prediction": 0, "model_uri": "models:/repro-ml-classifier@champion"}
 ```
 
-The signature holds the manifest version and the SHA-256 of the CSV, the SHA-256 of the copy of `uv.lock` in `src/repro_ml_pipeline/resources/` (a test checks that it equals the root `uv.lock`), one SHA-256 over every `.py` file in the package, the parameters stored in the pin, and the `--random-state` value of the check (default 42).
+The signature holds the manifest version and the SHA-256 of the CSV, the SHA-256 of the copy of `uv.lock` in `src/repro_ml_pipeline/resources/` (a test checks that it equals the root `uv.lock`), one SHA-256 over every `.py` file in the package, the parameters stored in the pin, and the seed stored in the pin (`--random-state` overrides it, and a value that differs from the pin is a mismatch).
 
 | Module | What it does |
 |---|---|
@@ -86,7 +87,7 @@ The signature holds the manifest version and the SHA-256 of the CSV, the SHA-256
 | `repro_ml_pipeline.serve` | The FastAPI app with `/health`, `/ready`, `/metadata` and `/predict` |
 | `repro_ml_pipeline.cli` | The `train`, `verify-signature` and `predict` commands |
 
-Named tests: `test_full_signature_covers_data_environment_code_params_and_seed`, `test_signature_changes_when_params_change`, `test_check_signature_mismatch_exit_semantics`, `test_data_quality_rejects_content_drift`, `test_metric_regression_floor` and `test_cli_train_and_verify`.
+Named tests: `test_full_signature_covers_data_environment_code_params_and_seed`, `test_signature_changes_when_params_change`, `test_check_signature_mismatch_exit_semantics`, `test_data_quality_rejects_content_drift`, `test_metric_regression_floor`, `test_cli_train_and_verify`, `test_committed_pin_verifies_with_exit_0` and `test_edit_to_package_source_or_lock_makes_committed_pin_fail`.
 
 Interview pack: [docs/INTERVIEW.md](docs/INTERVIEW.md).
 
@@ -107,15 +108,13 @@ uv run uvicorn repro_ml_pipeline.serve:app --port 8000
 ## Limits
 
 - It is not an MLOps platform, since it trains one logistic-regression classifier on the committed Wisconsin Diagnostic CSV, with no GPU training and no deployment to a hosted runtime.
-- Any edit to a `.py` file in the package changes the code hash, including edits to `cli.py` or `serve.py`. The committed pin `examples/artifacts/run_signature.json` was recorded before a later edit to `cli.py`, so it now returns `SIGNATURE_MISMATCH` on the code hash alone.
-- The check takes the seed from `--random-state`, not from the pin, so a pin trained with another seed needs the same value on the command line.
-- A mismatch and a usage error both exit 2. A CI step that must tell them apart reads the `verdict:` line.
+- Any edit to a `.py` file in the package changes the code hash, including edits to `cli.py` or `serve.py`, so CI fails on every source edit until the committed pin is renewed. To re-pin after a reviewed change, run `uv run repro-ml train --artifact-dir .local-artifacts`, copy `.local-artifacts/run_signature.json` over `examples/artifacts/run_signature.json` and commit it with the change.
 - The serving tests use a stand-in model manager. The real registry path behind the API is exercised by the `docker-smoke` CI job.
 - The benchmark shows repeatability on this data and pipeline, not generalisation to another population. The package needs Python 3.10, 3.11 or 3.12, as `pyproject.toml` states.
 
 ## CI and release
 
-- CI installs `uv.lock`, runs ruff and pytest on Python 3.10, 3.11 and 3.12, then trains and verifies the signature on each version. A `docker-smoke` job starts the MLflow tracking server, a one-shot trainer and the API with Docker Compose and calls `/ready`, `/metadata` and `/predict`; a recorded run is in [`examples/docker_smoke.txt`](examples/docker_smoke.txt).
+- CI installs `uv.lock`, runs ruff and pytest on Python 3.10, 3.11 and 3.12, verifies the committed pin `examples/artifacts/run_signature.json` before the tests, then trains once and checks that the fresh pin is byte for byte the committed one, on each version. A change to the data, lock file, package source, parameters or seed fails the job until a reviewed commit re-pins. A `docker-smoke` job starts the MLflow tracking server, a one-shot trainer and the API with Docker Compose and calls `/ready`, `/metadata` and `/predict`; a recorded run is in [`examples/docker_smoke.txt`](examples/docker_smoke.txt).
 - Pushing a `v*` tag reruns the gates, builds wheel and sdist files, publishes a versioned image to GitHub Container Registry and creates a GitHub Release. No workflow deploys to an external runtime.
 
 ## How we did it

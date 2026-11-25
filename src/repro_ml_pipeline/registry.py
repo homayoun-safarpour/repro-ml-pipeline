@@ -39,9 +39,16 @@ def model_version_metadata(model_uri: str) -> dict[str, str]:
     if not model_uri.startswith("models:/"):
         return {"model_uri": model_uri}
     suffix = model_uri.removeprefix("models:/")
-    name, _, alias = suffix.partition("@")
     client = MlflowClient()
-    version = client.get_model_version_by_alias(name, alias)
+    if "@" in suffix:
+        name, _, alias = suffix.partition("@")
+        version = client.get_model_version_by_alias(name, alias)
+    else:
+        name, _, number = suffix.rpartition("/")
+        if not name or not number:
+            raise ValueError(f"model URI needs models:/<name>@<alias> or /<version>: {model_uri}")
+        alias = ""
+        version = client.get_model_version(name, number)
     return {
         "model_uri": model_uri,
         "model_name": name,

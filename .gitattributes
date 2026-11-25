@@ -1,0 +1,3 @@
+# The run signature hashes these bytes, so keep them identical on every platform.
+src/repro_ml_pipeline/** text eol=lf
+examples/**/*.json text eol=lf

@@ -32,3 +32,10 @@ def test_readme_first_screen_matches_top100_craft():
 def test_readme_stranger_verify_exits_2():
     code = main(["verify-signature", "--pin", BAD_PIN])
     assert code == 2
+
+
+def test_readme_first_screen_output_is_the_real_output(capsys):
+    command = "uv run repro-ml verify-signature --pin examples/bad_pin.json\n```\n\n```text\n"
+    shown = README.split(command, 1)[1].split("```", 1)[0]
+    assert main(["verify-signature", "--pin", BAD_PIN]) == 2
+    assert capsys.readouterr().out == shown

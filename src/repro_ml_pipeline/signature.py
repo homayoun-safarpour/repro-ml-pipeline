@@ -86,6 +86,60 @@ def load_signature(path: str | Path) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+class PinError(ValueError):
+    """The pin file is missing, unreadable or not a valid pin."""
+
+
+_HEX = frozenset("0123456789abcdef")
+_DIGEST_LENGTH = 64
+
+
+def load_pin(path: str | Path) -> dict[str, Any]:
+    """Load a pin and check its shape; raise PinError with a one-line reason."""
+    try:
+        pin = load_signature(path)
+    except OSError as exc:
+        raise PinError(f"cannot read pin {path}: {exc.strerror or exc}") from exc
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise PinError(f"pin {path} is not valid JSON: {exc}") from exc
+    if not isinstance(pin, dict):
+        raise PinError(f"pin {path} must be a JSON object")
+    signature = pin.get("signature")
+    is_digest = (
+        isinstance(signature, str)
+        and len(signature) == _DIGEST_LENGTH
+        and set(signature) <= _HEX
+    )
+    if not is_digest:
+        raise PinError(f"pin {path} needs a 64-character lowercase hex 'signature'")
+    meta = pin.get("meta")
+    if not isinstance(meta, dict) or not isinstance(meta.get("params"), dict):
+        raise PinError(f"pin {path} needs a 'meta' object with a 'params' object")
+    seed = meta.get("seed")
+    if isinstance(seed, bool) or not isinstance(seed, int):
+        raise PinError(f"pin {path} needs an integer 'meta.seed'")
+    return pin
+
+
+def _flatten(value: Any, prefix: str = "") -> dict[str, Any]:
+    if isinstance(value, dict) and value:
+        flat: dict[str, Any] = {}
+        for key, item in value.items():
+            flat.update(_flatten(item, f"{prefix}{key}."))
+        return flat
+    return {prefix.rstrip("."): value}
+
+
+def changed_fields(pinned: dict[str, Any], current: dict[str, Any]) -> list[str]:
+    """Dotted names of fields that differ between the pin's meta and the recomputed payload."""
+    old, new = _flatten(pinned), _flatten(current)
+    return sorted(
+        key
+        for key in old.keys() | new.keys()
+        if key not in old or key not in new or old[key] != new[key]
+    )
+
+
 def check_signature(expected: str, actual: str) -> tuple[str, int]:
     if expected != actual:
         return "SIGNATURE_MISMATCH", 2
