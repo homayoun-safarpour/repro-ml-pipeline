@@ -1,5 +1,5 @@
 {
-  "signature": "bc9e9ed0dfe7a7e3ac4b2c95b759afedf1d0d623bd3718e0e5e0249eee89de36",
+  "signature": "e5dd67abf427480e9e9c1ab02246d0235295ae523b5fcf4ea31e0f4243a8661f",
   "meta": {
     "schema_version": 2,
     "data": {
@@ -14,7 +14,7 @@
       "python_requires": ">=3.10,<3.13"
     },
     "code": {
-      "revision": "sha256:01f4bbab3e1dcee49443bf5c00f2e4a1ad44b578dfd0daeb09885090b8b947ec"
+      "revision": "sha256:eafc1a27e8bec45788d07b5a9d583bc0398856ef578958eaccbc627c08d702ca"
     },
     "params": {
       "C": 1.0,

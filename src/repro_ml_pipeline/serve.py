@@ -42,7 +42,9 @@ class ModelManager:
         with self._lock:
             if self._model is not None:
                 return
-            self._model = load_model(self.model_uri)
+            # Build both into locals: a failed metadata lookup must not leave a
+            # loaded model behind, or the next /ready would say ready with no metadata.
+            model = load_model(self.model_uri)
             metadata = model_version_metadata(self.model_uri)
             run_id = metadata.get("run_id")
             if run_id:
@@ -51,6 +53,7 @@ class ModelManager:
                 metadata["code_revision"] = run.data.tags.get("code_revision", "")
                 metadata["dataset_sha256"] = run.data.tags.get("dataset_sha256", "")
             self._metadata = metadata
+            self._model = model
             LOGGER.info(json.dumps({"event": "model_loaded", **metadata}, sort_keys=True))
 
     @property
