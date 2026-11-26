@@ -15,7 +15,7 @@ services:
       - --port
       - "5000"
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     volumes:
       - mlflow-data:/mlflow
     healthcheck:
@@ -53,7 +53,7 @@ services:
       MLFLOW_TRACKING_URI: http://tracking:5000
       MODEL_URI: models:/repro-ml-classifier@champion
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       trainer:
         condition: service_completed_successfully
